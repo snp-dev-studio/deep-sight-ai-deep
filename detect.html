@@ -442,13 +442,7 @@
         <div class="det-list" id="vid-det-list"></div>
       </div>
 
-      <!-- Save -->
-      <div class="save-wrap" id="vid-save-wrap">
-        <button class="btn-secondary" id="vid-save-btn" onclick="saveVideoResult()">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Save Best Frame to History
-        </button>
-      </div>
+      <!-- No save for video — temporary detection only -->
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -815,7 +809,7 @@ function handleVideoFile(file){
   document.getElementById('vid-detect-btn').style.display='inline-flex';
   document.getElementById('vid-stop-btn').style.display='none';
 
-  hide('vid-dets-wrap'); hide('vid-save-wrap'); hide('vid-progress-wrap');
+  hide('vid-dets-wrap'); hide('vid-progress-wrap');
   document.getElementById('vid-snapshot-wrap').classList.remove('show');
   vidBestPreds=[]; vidBestScore=0; vidBestFrameData=null; vidFrameCount=0;
 }
@@ -905,7 +899,7 @@ function finalizeVideoDetection(){
     document.getElementById('vid-snapshot-wrap').classList.add('show');
     renderList('vid-det-list', vidBestPreds);
     show('vid-dets-wrap');
-    show('vid-save-wrap');
+    // No saving — video detection is temporary only
   }
 }
 
@@ -916,26 +910,13 @@ function resetVideo(){
   document.getElementById('vid-dropzone-area').style.display='';
   document.getElementById('video-box').classList.remove('show');
   document.getElementById('vid-actions').style.display='none';
-  hide('vid-info-bar'); hide('vid-progress-wrap'); hide('vid-dets-wrap'); hide('vid-save-wrap');
+  hide('vid-info-bar'); hide('vid-progress-wrap'); hide('vid-dets-wrap');
   document.getElementById('vid-snapshot-wrap').classList.remove('show');
   vidBestPreds=[]; vidBestScore=0; vidBestFrameData=null;
   document.getElementById('vid-file-input').value='';
 }
 
-async function saveVideoResult(){
-  if(!vidBestFrameData){ alert('No detection to save.'); return; }
-  const btn=document.getElementById('vid-save-btn');
-  btn.disabled=true; btn.textContent='Saving...';
-  try{
-    const savedUrl=await uploadImg(vidBestFrameData,'video_snapshot');
-    const objs=vidBestPreds.map(p=>({class:p.class,confidence:Math.round(p.score*100),bbox:p.bbox}));
-    const avgC=vidBestPreds.length?Math.round(vidBestPreds.reduce((s,p)=>s+p.score,0)/vidBestPreds.length*100):0;
-    const resp=await sbPost('/rest/v1/detections',{login_id:user,image_url:savedUrl,detected_objects:objs,total_objects:vidBestPreds.length,top_class:(vidBestPreds[0]?vidBestPreds[0].class:'unknown'),avg_confidence:avgC,source:'video',timestamp:new Date().toISOString()});
-    if(resp.ok||resp.status===201){ btn.textContent='✅ Saved!'; }
-    else{ btn.textContent='❌ Save failed'; }
-  }catch(e){ btn.textContent='❌ Error'; }
-  setTimeout(()=>{ btn.disabled=false; btn.innerHTML='<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Best Frame to History'; }, 2500);
-}
+// Video detection is temporary — no saving to Supabase
 
 // ═══════════════════════════════════════
 // LIVE STREAM CONTINUOUS DETECTION
